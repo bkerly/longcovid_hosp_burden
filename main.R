@@ -58,12 +58,12 @@ hosp<- hosp %>%
     sex = factor(sex),
     age = ageinyears,
     re = case_when(
-      ethnicity == 2 ~ "Hispanic",
-      ethnicity == 1 ~ race
+      ethnicity == 1 ~ "Hispanic",
+      ethnicity == 2 ~ race
     ),
     residence = case_when(
       residence == 1 ~ "Denver Metro Area",
-      residence == 1 ~ "Outside of Denver"
+      residence == 2 ~ "Outside of Denver"
     ),
     age_group = case_when(
       ageinyears <= 19 ~ "Pediatric (0-19 Years)",
@@ -72,7 +72,7 @@ hosp<- hosp %>%
       TRUE ~ "Older adults (60+)"
     ),
     principal_diagnosis = case_when(
-      PrincipleDiagnosis == "U071" ~ "Acute COVID (UO7.1)",
+      PrincipleDiagnosis == "U071" ~ "Acute COVID (U07.1)",
       PrincipleDiagnosis == "U099" ~ "Long COVID (U09.9)",
       TRUE ~ "Other Principal Encounter Diagnosis"
     )
@@ -86,5 +86,5 @@ hosp_num <- hosp %>%
 # Make tables -------
 
 
-  table1(~ principal_diagnosis + age +age_group + re + residence + LOS
+  table1(~ principal_diagnosis + age + age_group + re + residence + LOS
            | type, data = hosp)

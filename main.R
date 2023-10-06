@@ -45,8 +45,9 @@ denom <- denom %>%
     type = factor(type),
     residence = case_when(
       residence == 1 ~ "Denver Metro Area",
-      residence == 1 ~ "Outside of Denver"
+      residence == 2 ~ "Outside of Denver"
     ),
+    tot_enc = num
   )
   
 
@@ -79,12 +80,38 @@ hosp<- hosp %>%
   )
 
 
-hosp_num <- hosp %>%
-  group_by(month,type,sex,re,residence,age_group,principal_diagnosis) %>%
-  summarize(count = n())
 
 # Make tables -------
 
 
   table1(~ principal_diagnosis + age + age_group + re + residence + LOS
            | type, data = hosp)
+
+
+# Make graphs -------------------------------------------------------------
+
+# Aggregate by many, many variables
+hosp_num <- hosp %>%
+  group_by(month,type,sex,re,residence,age_group,principal_diagnosis) %>%
+  summarize(encounters = n()) 
+
+
+# Enounters by encounter trype over month
+
+hosp %>%
+  group_by(month, type) %>%
+  summarize(encounters = n()) %>%
+  ggplot(aes(x=month,y=encounters,color = type)) +
+  geom_line(linewidth = 2) +
+  theme_fivethirtyeight() +
+  theme(legend.title = element_blank()) +
+  labs(title = "Long COVID Encounters",
+       subtitle = "By Encounter Month")
+
+# Encounters as a rate
+
+hosp %>%
+  group_by(month, type) %>%
+  summarize(encounters = n()) %>%
+  left_join(denom) %>%
+  mutate(rate_per_1000_encounters = encounters / tot_enc)

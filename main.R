@@ -128,6 +128,8 @@ table1( ~ principal_diagnosis + age + age_group + re + residence + LOS
 # Encounters by encounter type over month
 
 hosp %>%
+  #remove data after May 1
+  filter(month < mdy("6/1/2023")) %>%
   # Group By + Summarize just aggregates line lists into counts
   group_by(month, type) %>%
   summarize(encounters = n()) %>%
@@ -141,18 +143,23 @@ hosp %>%
   theme(legend.title = element_blank()) +
   # Add in a title and subtitle
   labs(title = "Long COVID Encounters",
-       subtitle = "By Encounter Type")
+       subtitle = "By Encounter Type")  +
+  # axis scales
+scale_y_continuous(labels = scales::comma) + 
+  scale_x_date(date_labels =  "%b %Y")
 
 # Save it!
 ggsave(
   "graphs/Long COVID Encounters by Encounter Type.png",
-  width = 3.5,
-  height = 3
+  width = 7,
+  height = 4
 )
 
 # Encounters as a rate
 
 hosp %>%
+  #remove data after May 1
+  filter(month < mdy("6/1/2023")) %>%
   # Do the same group by as above
   group_by(month, type) %>%
   summarize(encounters = n()) %>%
@@ -163,24 +170,29 @@ hosp %>%
               group_by(month, type) %>%
               summarize(tot_enc = sum(tot_enc))) %>%
   # Calculate rate per 1000 hospitalizations
-  mutate(rate_per_1000_encounters = encounters / (tot_enc * 1000)) %>%
+  mutate(rate_per_1000_encounters = encounters* 1000 / (tot_enc )) %>%
   # Plot the graph, same as above
   ggplot(aes(x = month, y = rate_per_1000_encounters, color = type)) +
   geom_line(linewidth = 2) +
   theme_fivethirtyeight() +
   theme(legend.title = element_blank()) +
+  # axis scales
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_date(date_labels =  "%b %Y") +
   labs(title = "Long COVID Encounters per 1000 Hospital Encounters",
        subtitle = "By Encounter Type")
 
 
 ggsave(
   "graphs/Long COVID Encounter Rate by Encounter Type.png",
-  width = 3.5,
-  height = 3
+  width = 7,
+  height = 4
 )
 
 # Count by sex
 hosp %>%
+  #remove data after May 1
+  filter(month < mdy("6/1/2023")) %>%
   # Just an extra aggregating variable here, sex. Then everything is the same until...
   group_by(month, type, sex) %>%
   summarize(encounters = n()) %>%
@@ -191,7 +203,10 @@ hosp %>%
   labs(title = "Long COVID Encounters",
        subtitle = "By Encounter Type and Sex") +
   # ... you get here, which gives you two stacked graphs.
-  facet_wrap( ~ type, 2)
+  facet_wrap( ~ type, 2) +
+  # axis scales
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_date(date_labels =  "%b %Y")
 
 ggsave(filename = "graphs/Long COVID Encounter Rate by Encounter Type and Sex.png",
        width = 7,
@@ -199,19 +214,29 @@ ggsave(filename = "graphs/Long COVID Encounter Rate by Encounter Type and Sex.pn
 
 # Count by age group
 hosp %>%
+  #remove data after May 1
+  filter(month < mdy("6/1/2023")) %>%
   # Same as the sex graph, but this time by age group.
   group_by(month, type, age_group) %>%
-  summarize(encounters = n()) %>%
+  summarize(encounters = n()) %>% 
+  # Fill in missing cases (where there are 0 encounters of a type)
+  ungroup() %>%
+  tidyr::complete(., month, type, age_group, fill = list(encounters = 0)) %>% 
+ # view()
   ggplot(aes(x = month, y = encounters, color = age_group)) +
   geom_line(linewidth = 2) +
   theme_fivethirtyeight() +
   theme(legend.title = element_blank()) +
   labs(title = "Long COVID Encounters",
        subtitle = "By Encounter Type and Age Group") +
-  facet_wrap( ~ type, 2)
+  facet_wrap( ~ type, 2) +
+  # axis scales
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_date(date_labels =  "%b %Y")
 
 ggsave(
   "graphs/Long COVID Encounter Rate by Encounter Type and Age Group.png",
   width = 7,
   height = 4
 )
+
